@@ -13,9 +13,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 URL = os.environ["URL"]
-SCOPES = os.environ["SCOPES"]
+SCOPES = os.environ["SCOPES"].split(',')
 SPREADSHEET_ID = os.environ["SPREADSHEET_ID"]
-SHEETS = os.environ["SHEETS"]
+SHEETS = os.environ["SHEETS"].split(',')
 
 class GoogleDocGenerator:
     def __init__(self, page_type):
