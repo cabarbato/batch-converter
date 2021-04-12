@@ -65,6 +65,7 @@ class GoogleDocGenerator:
         try:
             driver.set_page_load_timeout(30)
             driver.get(URL)
+            
             for url in self.urls:
                 self.generateDoc(url)
         except selenium.common.exceptions.TimeoutException as ex:
@@ -72,10 +73,24 @@ class GoogleDocGenerator:
 
     def generateDoc(self, row):
         self.fillInputField('document_url', row[0])
+        
         if self.page_type == 1:
-            self.fillInputField('document_url', row[1])
-            self.fillInputField('document_url', row[2].split("; ")[0])
-            self.fillInputField('document_url', row[2].split("; ")[1])
+            try:
+                button_path = "//div[@id='article_type_buttons']//div[@data-toggle='buttons']//label"
+                article_button = driver.find_elements_by_xpath(button_path)
+                article_button[1].click()
+            except:  pass # LBA is already selected
+            
+            self.fillInputField('meta_description', row[1])
+            
+            split_text = row[2].split("; ")
+            
+            if len(split_text) > 1:
+                self.fillInputField('header_text', split_text[0])
+                self.fillInputField('subheader_text', split_text[1])
+            else: 
+                self.fillInputField('header_text', row[2])
+                
         driver.find_element_by_xpath("//button[@type='submit']").click()
         time.sleep(10)
 
