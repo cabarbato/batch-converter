@@ -1,4 +1,11 @@
+# For more information, please refer to https://aka.ms/vscode-docker-python
 FROM python:3.8
+
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
 
 # Adding trusting keys to apt for repositories
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
@@ -20,11 +27,17 @@ RUN wget -O /tmp/chromedriver.zip http://chromedriver.storage.googleapis.com/`cu
 # Unzip the Chrome Driver into /usr/local/bin directory
 RUN unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/
 
-# Set display port as an environment variable
-ENV DISPLAY=:99
+# Install pip requirements
+COPY requirements.txt .
+RUN python -m pip install -r requirements.txt
 
-COPY . /
-WORKDIR /
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
-CMD ["python", "./script.py"]
+WORKDIR /app
+COPY . /app
+
+# Creates a non-root user with an explicit UID and adds permission to access the /app folder
+# For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
+RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
+USER appuser
+
+# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
+CMD ["python", "script.py"]

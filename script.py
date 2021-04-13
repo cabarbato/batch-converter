@@ -1,4 +1,5 @@
 import os
+import sys
 import csv
 import time
 import pickle
@@ -6,6 +7,7 @@ import os.path
 import selenium
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from googleapiclient.discovery import build
@@ -16,6 +18,19 @@ URL = os.environ["URL"]
 SCOPES = os.environ["SCOPES"].split(',')
 SPREADSHEET_ID = os.environ["SPREADSHEET_ID"]
 SHEETS = os.environ["SHEETS"].split(',')
+
+def set_chrome_options() -> None:
+    """Sets chrome options for Selenium.
+    Chrome options for headless browser is enabled.
+    """
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_prefs = {}
+    chrome_options.experimental_options["prefs"] = chrome_prefs
+    chrome_prefs["profile.default_content_settings"] = {"images": 2}
+    return chrome_options
 
 class GoogleDocGenerator:
     def __init__(self, page_type):
@@ -94,32 +109,34 @@ class GoogleDocGenerator:
         driver.find_element_by_xpath("//button[@type='submit']").click()
         time.sleep(10)
 
+if __name__ == "__main__":
+    driver = webdriver.Chrome(options=set_chrome_options())
 
-driver = webdriver.Chrome()
+    if len(sys.argv) > 1:
+        filename, start_row, end_row, page_type = sys.argv
 
-start_row = input("Enter the first row # you'd like to generate files from: ")
-end_row = input("Now enter the last row # to generate: ")
+    else: 
+        start_row = input("Enter the first row # you'd like to generate files from: ")
+        end_row = input("Now enter the last row # to generate: ")
 
-while True:
-    page_type = input(
-        "Select a page type by entering the corresponding number.\n" +
-        "1. " + SHEETS[0] + "\n" +
-        "2. " + SHEETS[1] + "\n"
-    )
+        while True:
+            page_type = input(
+                "Select a page type by entering the corresponding number.\n" +
+                "1. " + SHEETS[0] + "\n" +
+                "2. " + SHEETS[1] + "\n"
+                )
+            if page_type not in (1, 2): print("Please enter a valid selection.")
+            else: break
 
     page_type = int(page_type)
-    GD = GoogleDocGenerator(page_type)
-
-    if page_type not in (1, 2):
-        print("Please enter a valid selection.")
+    if page_type == 1:
+        columns = ('D', 'F')
     else:
-        if page_type == 1:
-            columns = ('D', 'F')
-        else:
-            columns = ('C', 'C')
-        google_sheet_range = SHEETS[page_type - 1] + '!' + columns[0] + \
-            str(start_row) + ':' + columns[1] + str(end_row) + ''
-        GD.authenticate(google_sheet_range)
-        break
-
-driver.quit()
+        columns = ('C', 'C')
+        
+    google_sheet_range = SHEETS[page_type - 1] + '!' + columns[0] + \
+        start_row + ':' + columns[1] + end_row + ''
+        
+    GoogleDocGenerator(page_type).authenticate(google_sheet_range)
+            
+    driver.quit()

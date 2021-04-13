@@ -1,0 +1,14 @@
+version: '3.4'
+
+services:
+  batchconverter:
+    image: batchconverter
+    environment:
+      URL: ${URL}
+      SHEETS: ${SHEETS}
+      SCOPES: ${SCOPES}
+      SPREADSHEET_ID: ${SPREADSHEET_ID}
+      DISPLAY: ":99"
+    build:
+      context: .
+      dockerfile: ./Dockerfile
